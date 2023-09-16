@@ -61,100 +61,101 @@ int main(void) {
                 strcpy(expanded_command, "");
 
 
-            while (token != NULL) {
-                char *env_value = getenv(token + 1); // Ignora o "$" no início
-                if (env_value != NULL) {
-                    //The strcat() function concatenates the destination string and the source string, and the result is stored in the destination string.
-                    //https://www.programiz.com/c-programming/library-function/string.h/strcat
-                    strcat(expanded_command, env_value);
-                } else {
-                    strcat(expanded_command, token);
+                while (token != NULL) {
+                    char *env_value = getenv(token + 1); // Ignora o "$" no início
+                    if (env_value != NULL) {
+                        //The strcat() function concatenates the destination string and the source string, and the result is stored in the destination string.
+                        //https://www.programiz.com/c-programming/library-function/string.h/strcat
+                        strcat(expanded_command, env_value);
+                    } else {
+                        strcat(expanded_command, token);
+                    }
+
+                    strcat(expanded_command, " "); // Adiciona um espaço entre os tokens
+                    token = strtok(NULL, " ");
                 }
 
-                strcat(expanded_command, " "); // Adiciona um espaço entre os tokens
-                token = strtok(NULL, " ");
-            }
+                // Remove a quebra de linha da entrada para evitar problemas com o \n
+                expanded_command[strlen(expanded_command) - 1] = '\0';
 
-            // Remove a quebra de linha da entrada para evitar problemas com o \n
-            expanded_command[strlen(expanded_command) - 1] = '\0';
+                //armazenando tokens (comando e argumentos)
+                char *tokens[MAX_ARG_SIZE];
+                int token_counter = 0;
 
-            //armazenando tokens (comando e argumentos)
-            char *tokens[MAX_ARG_SIZE];
-            int token_counter = 0;
-
-            //divide entrada em tokens usando o espaco (" ") como divisor
-            token = strtok(expanded_command, " ");
-            while (token != NULL) {
-                tokens[token_counter] = token;
-                token_counter++;
-            
-                //proximo token
-                token = strtok(NULL, " ");
-            }
-
-            //verifica se o usuario inseriu um comando
-            if (token_counter > 0) {
-                //primeiro token eh o comando
-                char *command = tokens[0];
-                //o resto dos tokens sao os args
-                char **args = &tokens[1];
-
-            //comandos internos
-            /*
-                Comandos internos são comandos que são tratados pelo próprio shell em vez de serem executados como programas externos.
-                Alguns exemplos de comandos internos comuns incluem "cd" para mudar de diretório,
-                "help" para exibir informações de ajuda e "exit" para sair do shell.
-            */
-            if (strcmp(command, "help") == 0) {
-                //exibe informacoes de ajuda
-                printf("Bem-vindo(a) ao vmigux-shell!\n");
-                printf("Comandos disponíveis:\n");
-                printf("cd [diretório]: Mudar de diretório\n");
-                printf("help: Exibir mensagem de ajuda\n");
-                printf("vexit: Sair do vmigux-shell\n");
-            }
-            else if (strcmp(command, "vexit") == 0) {
-                //sai do vmigux-shell
-                printf("Saindo do vmigux-shell... see you!\n");
-                exit(EXIT_SUCCESS);
-            }
-            else {
-                //comando n reconhecido. partir para a execucao de comandos externos
-
-                //cria um novo processo
-                pid_t pid = fork();
-
-                if (pid == 0) {
-                    //processo filho
-                    //executa o comando + os args
-                    //"Use execvp com a função fork para criar um processo filho e executar um programa diferente em C"
-                    execvp(command, args);
-
-                    //se execvp retornar, houve erro
-                    //a função perror mapeia o erro numérico, contido na variável global errno, para uma mensagem de erro. Em seguida, a função imprime essa mensagem de erro na saída
-                    perror("Error executing command");
-                    exit(EXIT_FAILURE);
+                //divide entrada em tokens usando o espaco (" ") como divisor
+                token = strtok(expanded_command, " ");
+                while (token != NULL) {
+                    tokens[token_counter] = token;
+                    token_counter++;
+                
+                    //proximo token
+                    token = strtok(NULL, " ");
                 }
-                else if (pid > 0) {
-                    //proccesso pai
-                    //aguarda a conclusao do processo filho
-                    waitpid(pid, NULL, 0);
+
+                //verifica se o usuario inseriu um comando
+                if (token_counter > 0) {
+                    //primeiro token eh o comando
+                    char *command = tokens[0];
+                    //o resto dos tokens sao os args
+                    char **args = &tokens[1];
+
+                //comandos internos
+                /*
+                    Comandos internos são comandos que são tratados pelo próprio shell em vez de serem executados como programas externos.
+                    Alguns exemplos de comandos internos comuns incluem "cd" para mudar de diretório,
+                    "help" para exibir informações de ajuda e "exit" para sair do shell.
+                */
+                if (strcmp(command, "help") == 0) {
+                    //exibe informacoes de ajuda
+                    printf("Bem-vindo(a) ao vmigux-shell!\n");
+                    printf("Comandos disponíveis:\n");
+                    printf("cd [diretório]: Mudar de diretório\n");
+                    printf("help: Exibir mensagem de ajuda\n");
+                    printf("vexit: Sair do vmigux-shell\n");
+                    command_counter++;
+                }
+                else if (strcmp(command, "vexit") == 0) {
+                    //sai do vmigux-shell
+                    printf("Saindo do vmigux-shell... see you!\n");
+                    exit(EXIT_SUCCESS);
                 }
                 else {
-                    perror("Error creating a new process");
-                    exit(EXIT_FAILURE);
-                }
+                    //comando n reconhecido. partir para a execucao de comandos externos
 
-                //prox comando separado por ";"
-                command = strtok(NULL, ";");
+                    //cria um novo processo
+                    pid_t pid = fork();
+
+                    if (pid == 0) {
+                        //processo filho
+                        //executa o comando + os args
+                        //"Use execvp com a função fork para criar um processo filho e executar um programa diferente em C"
+                        execvp(command, args);
+
+                        //se execvp retornar, houve erro
+                        //a função perror mapeia o erro numérico, contido na variável global errno, para uma mensagem de erro. Em seguida, a função imprime essa mensagem de erro na saída
+                        perror("Error executing command");
+                        exit(EXIT_FAILURE);
+                    }
+                    else if (pid > 0) {
+                        //proccesso pai
+                        //aguarda a conclusao do processo filho
+                        waitpid(pid, NULL, 0);
+                    }
+                    else {
+                        perror("Error creating a new process");
+                        exit(EXIT_FAILURE);
+                    }
+
+                    //prox comando separado por ";"
+                    command = strtok(NULL, ";");
+                }
             }
         }
-    }
 
         //sempre bom liberar a memoria alocada kkkkk
         free(input);
     }
 
-        return 0;
-    }
+    return 0;
+}
 }
