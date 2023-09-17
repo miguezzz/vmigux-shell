@@ -112,7 +112,8 @@ int main(void) {
                     printf("cd [diretório]: Mudar de diretório\n");
                     printf("help: Exibir mensagem de ajuda\n");
                     printf("vexit: Sair do vmigux-shell\n");
-                    command_counter++;
+
+                    continue;
                 }
                 else if (strcmp(command, "vexit") == 0) {
                     //sai do vmigux-shell
@@ -120,7 +121,7 @@ int main(void) {
                     exit(EXIT_SUCCESS);
                 }
                 else {
-                    //comando n reconhecido. partir para a execucao de comandos externos
+                    //comando nao reconhecido. partir para a execucao de comandos externos
 
                     //cria um novo processo
                     pid_t pid = fork();
@@ -156,6 +157,7 @@ int main(void) {
         free(input);
     }
 
+    }
+    
     return 0;
-}
 }
